@@ -1,0 +1,301 @@
+#include <iostream>
+using namespace std;
+#define MaxInt 32767
+#define MVNum 100
+typedef struct message
+{
+    int num;          //景点代码
+    char name[100];    //景点名称
+    char pro[500];      //简介
+} Ciceroni;
+
+typedef Ciceroni VerTexType;
+typedef int ArcType;
+typedef struct
+{
+    VerTexType vexs[MVNum];
+    ArcType arcs[MVNum][MVNum];
+    int vexnum, arcnum;
+} AMGraph;
+
+Ciceroni  school[20] = { {1,"大学生活动中心","5:30-22:30"},{2,"北校门","5:30-20：00"},{3,"图书馆","5:00-23:00"},
+    {4,"航空宇航馆","5:00-23:00"},{5,"工程训练中心","5:00-23:00"},{6,"逸夫馆","5:00到11:00"},{7,"经管楼","6:00-21:45"},
+    {8,"航空工程综合实验教学基地","5:00-23:00"},{9,"机械馆","5:00-23:00"},{10,"设艺楼","5:00-23:00"}
+};
+
+void CreatMap(AMGraph& G)
+{
+    int i, j;
+    G.vexnum = 10;
+    G.arcnum = 12;
+    for (i = 0; i < G.vexnum; i++)
+        for (j = 0; j < G.vexnum; j++)
+            G.arcs[i][j] = MaxInt;
+    //已知路线长度
+    G.arcs[0][1] = 150;
+    G.arcs[0][2] = 100;
+    G.arcs[1][9] = 200;
+    G.arcs[2][3] = 200;
+    G.arcs[2][9] = 300;
+    G.arcs[2][4] = 300;
+    G.arcs[3][6] = 200;
+    G.arcs[4][5] = 100;
+    G.arcs[4][7] = 50;
+    G.arcs[5][6] = 100;
+    G.arcs[7][8] = 50;
+    G.arcs[8][9] = 100;
+
+    for (i = 0; i < 10; i++)
+        G.vexs[i] = school[i];
+    for (i = 0; i < G.vexnum; i++)
+        for (j = 0; j < G.vexnum; j++)
+            G.arcs[j][i] = G.arcs[i][j];
+}
+void PrintMap()
+{
+    cout << "\n";
+    cout << "                【学校地图】\n";
+    cout << "北校门(2)--------大学生活动中心(1)                      \n";
+    cout << " |                 |                             \n";
+    cout << "设艺楼(10)------图书馆(3)------------ 航空宇航馆(4) \n";
+    cout << " |                  |                     |      \n";
+    cout << "机械馆(9)-航空工程综合实验教学基地(8)-工程训练中心(5)-逸夫馆(6)-经管楼(7)\n\n";
+}
+
+void PrintPlace(AMGraph G, int num)
+{
+    cout << "【景点编码】:" << G.vexs[num - 1].num << "\n【景点名称】:" << G.vexs[num - 1].name << "\n【景点简介】:" << G.vexs[num - 1].pro << endl;
+}
+
+void SeePlace(AMGraph G)
+{
+    for (int i = 0; i < G.vexnum; i++)
+        PrintPlace(G, i + 1);
+}
+void DFS_AM(AMGraph G, int v, int visited[])
+{
+    PrintPlace(G, v + 1);
+    visited[v] = 1;
+    for (int w = 0; w < G.vexnum; w++)
+        if ((G.arcs[v][w] != 0) && (!visited[w]))
+            DFS_AM(G, w, visited);
+}
+void Menu()
+{
+    cout << "┍---------------------------------------┑\n";
+    cout << "             【校园导游程序】\n";
+    cout << "【1】--查看学校平面图\n";
+    cout << "【2】--求两景点之间的最短路径\n";
+    cout << "【3】--增加新的景点\n";
+    cout << "【4】--删除指定路线\n";
+    cout << "【5】--查看指定景点信息\n";
+    cout << "【6】--更改景点相关信息\n";
+    cout << "【7】--查看所有现有景点\n";
+    cout << "【0】--退出程序\n";
+    cout << "┕----------------------------------------┙\n";
+    cout << "请输入指令(0-7):";
+}
+
+int CheckNum(int num, AMGraph G)
+{
+    for (int i = 0; i < G.vexnum; i++)
+        if (G.vexs[i].num == num)
+            return 1;
+    return 0;
+}
+
+void Change(AMGraph& G, int v, int n, int visited[])
+{
+    if (n == v)
+    {
+        cout << "请输入新的景点名称:";
+        cin >> G.vexs[n].name;
+        cout << ">景点名称更改为:" << G.vexs[n].name << endl;
+        cout << "请输入新的景点简介:";
+        cin >> G.vexs[n].pro;
+        cout << ">景点简介更改为:" << G.vexs[n].pro << endl;
+        cout << "景点信息更改完成." << endl;
+    }
+    visited[v] = 1;
+    for (int w = 0; w < G.vexnum; w++)
+        if ((G.arcs[v][w] != 0) && (!visited[w]))
+            Change(G, w, n, visited);
+}
+
+void NewPlace(AMGraph& G)
+{
+    int new_num, num, i, j;
+    int n = 0;
+    cout << "输入新景点编码:";
+    cin >> school[G.vexnum].num;
+    if (CheckNum(school[G.vexnum].num, G))
+    {
+        cout << "景点编码已存在!\n";
+        return;
+    }
+    cout << "输入新景点名称:";
+    cin >> school[G.vexnum].name;
+    cout << "输入新景点简介:";
+    cin >> school[G.vexnum].pro;
+    G.vexs[G.vexnum] = school[G.vexnum];
+    //cout<<G.vexs[G.vexnum].num<<' '<<G.vexs[G.vexnum].name<<"\n";
+    for (int i = 0; i <= G.vexnum; i++)
+        G.arcs[i][G.vexnum] = MaxInt;
+    cout << "输入新景点相关路线信息(应包含两端点以及路线长度,输入0 0结束):\n";
+    cin >> new_num >> num;
+    while (new_num != 0)
+    {
+        new_num = new_num - 1;
+        num = num - 1;
+        n++;//增加边数
+        cin >> G.arcs[new_num][num];
+        G.arcs[num][new_num] = G.arcs[new_num][num];//注意编码比数组坐标大1！
+        cin >> new_num >> num;
+    }
+    cout << "景点【" << school[G.vexnum].name << "】创建成功";
+    for (i = 0; i <= G.vexnum; i++)
+        for (j = 0; j <= G.vexnum; j++)
+            G.arcs[j][i] = G.arcs[i][j];
+    G.vexnum++;
+    G.arcnum = G.arcnum + n;
+}
+
+void ShortestPath_Floyd(AMGraph G)//佛洛伊德算法求vi,vj之间最短距离
+{
+    int i, j, k, D[MVNum][MVNum], path[MVNum][MVNum];
+    int place[MVNum];
+    int v0, v1;
+    for (i = 0; i < G.vexnum; i++)
+        for (j = 0; j < G.vexnum; j++)
+        {
+            D[i][j] = G.arcs[i][j];
+            if (D[i][j] < MaxInt && i != j)
+                path[i][j] = i;//j前驱为i
+            else
+                path[i][j] = -1;//j前驱为-1
+        }
+    for (k = 0; k < G.vexnum; k++)
+        for (i = 0; i < G.vexnum; i++)
+            for (j = 0; j < G.vexnum; j++)
+                if (D[i][k] + D[k][j] < D[i][j])//从i到k,再到j路径更短
+                {
+                    D[i][j] = D[i][k] + D[k][j];
+                    path[i][j] = path[k][j];
+                }
+    for (i = 0; i < G.vexnum; i++)
+        for (j = 0; j < G.vexnum; j++)
+            if (i == j)
+                D[i][j] = D[j][i] = 0;
+    cout << "请输入起点:";
+    cin >> v0;
+    cout << "请输入终点:";
+    cin >> v1;
+    v0--;
+    v1--;//下标从0开始
+    int t = v1;//v1接下来会改变,寄存给t
+    i = 0;
+    cout << "【" << G.vexs[v0].name << "】到【" << G.vexs[v1].name << "】的最短距离为 " << D[v0][v1] << " m\n";
+    cout << "\n其最短路线为 :【" << G.vexs[v0].name << "】<->";
+    while (path[v0][v1] != v0)
+    {
+        place[i] = path[v0][v1];
+        i++;
+        v1 = path[v0][v1];
+    }
+    i--;
+    for (i; i >= 0; i--)
+        cout << "【" << G.vexs[place[i]].name << "】<->";
+    cout << "【" << G.vexs[t].name << "】" << endl;
+}
+
+void DeleteRoad(AMGraph& G)
+{
+    int num1, num2;
+    cout << "输入删除路线端点:";
+    cin >> num1 >> num2;
+    num1--;
+    num2--;
+    G.arcs[num1][num2] = MaxInt;
+    G.arcs[num2][num1] = MaxInt;
+    cout << "删除【" << G.vexs[num1].name << "】到【" << G.vexs[num2].name << "】路线成功\n";
+}
+void Order(AMGraph G)
+{
+    while (1)
+    {
+        int x, num, visited[MVNum] = { 0 };;
+        Menu();
+        cin >> x;
+        switch (x)
+        {
+        case 0:
+            cout << "\n成功退出程序...\n";
+            return;
+            break;
+
+        case 1:
+            PrintMap();
+            system("pause");
+            system("cls");
+            break;
+
+        case 2:
+            ShortestPath_Floyd(G);
+            system("pause");
+            system("cls");
+            break;
+
+        case 3:
+            NewPlace(G);
+            system("pause");
+            system("cls");
+            break;
+
+        case 4:
+            DeleteRoad(G);
+            system("pause");
+            system("cls");
+            break;
+
+        case 5:
+            cout << "请输入查找景点编码:";
+            cin >> num;
+            if (!CheckNum(num, G))
+                cout << "无效编码！" << endl;
+            else
+                PrintPlace(G, num);
+            system("pause");
+            system("cls");
+            break;
+
+        case 6:
+            cout << "要更改的景点编码:";
+            cin >> num;
+            if (!CheckNum(num, G))
+                cout << "无效编码！" << endl;
+            else
+                Change(G, 0, num - 1, visited);
+            system("pause");
+            system("cls");
+            break;
+
+        case 7:
+            DFS_AM(G, 0, visited);
+            system("pause");
+            system("cls");
+            break;
+        default:
+            cout << "无效指令！" << endl;
+            system("pause");
+            system("cls");
+        }
+    }
+}
+int main()
+{
+    AMGraph G;
+    CreatMap(G);
+    Order(G);
+    return 0;
+}
+
